@@ -1,97 +1,93 @@
-# DRL-robot-navigation
+# &#x20;twin-delayed deep deterministic policy gradient (TD3) 网络训练移动机器人
+
+## 目录
+
+-   [1 项目简介](#1-项目简介)
+
+-   [2 项目来源](#2-项目来源)
+
+-   [3 项目使用方式](#3-项目使用方式)
+
+-   [4训练效果](#4训练效果)
+
+-   [ 5 Reward](#-5-Reward)
 
 
-Deep Reinforcement Learning for mobile robot navigation in ROS Gazebo simulator. Using Twin Delayed Deep Deterministic Policy Gradient (TD3) neural network, a robot learns to navigate to a random goal point in a simulated environment while avoiding obstacles. Obstacles are detected by laser readings and a goal is given to the robot in polar coordinates. Trained in ROS Gazebo simulator with PyTorch.  Tested with ROS Noetic on Ubuntu 20.04 with python 3.8.10 and pytorch 1.10.
+# 1 项目简介
 
-**Installation and code overview tutorial available** [here](https://medium.com/@reinis_86651/deep-reinforcement-learning-in-mobile-robot-navigation-tutorial-part1-installation-d62715722303)
+在ROS/Gazebo场景下，通过twin-delayed deep deterministic policy gradient (TD3) 算法，机器人以激光点云及当前位姿为state，机器人的控制量速度$v$和角速度$w$为action，强化训练移动机器人，使其实现在动态环境中的自主导航
 
-Training example:
-<p align="center">
-    <img width=100% src="https://github.com/reiniscimurs/DRL-robot-navigation/blob/main/training.gif">
-</p>
+# 2 项目来源
 
+开源算法：[https://github.com/reiniscimurs/DRL-robot-navigation](https://github.com/reiniscimurs/DRL-robot-navigation "https://github.com/reiniscimurs/DRL-robot-navigation")
 
+# 3 项目使用方式
 
-**ICRA 2022 and IEEE RA-L paper:**
+-   复制仓库信息
 
-
-Some more information about the implementation is available [here](https://ieeexplore.ieee.org/document/9645287?source=authoralert)
-
-Please cite as:<br/>
-```
-@ARTICLE{9645287,
-  author={Cimurs, Reinis and Suh, Il Hong and Lee, Jin Han},
-  journal={IEEE Robotics and Automation Letters}, 
-  title={Goal-Driven Autonomous Exploration Through Deep Reinforcement Learning}, 
-  year={2022},
-  volume={7},
-  number={2},
-  pages={730-737},
-  doi={10.1109/LRA.2021.3133591}}
-```
-
-## Installation
-Main dependencies: 
-
-* [ROS Noetic](http://wiki.ros.org/noetic/Installation)
-* [PyTorch](https://pytorch.org/get-started/locally/)
-* [Tensorboard](https://github.com/tensorflow/tensorboard)
-
-Clone the repository:
-```shell
-$ cd ~
-### Clone this repo
-$ git clone https://github.com/reiniscimurs/DRL-robot-navigation
-```
-The network can be run with a standard 2D laser, but this implementation uses a simulated [3D Velodyne sensor](https://github.com/lmark1/velodyne_simulator)
-
-Compile the workspace:
-```shell
-$ cd ~/DRL-robot-navigation/catkin_ws
-### Compile
-$ catkin_make_isolated
+```bash
+git clone https://e.coding.net/donkehuang/deeplearningexercise/DRL-robot-navigation.git
 ```
 
-Open a terminal and set up sources:
-```shell
-$ export ROS_HOSTNAME=localhost
-$ export ROS_MASTER_URI=http://localhost:11311
-$ export ROS_PORT_SIM=11311
-$ export GAZEBO_RESOURCE_PATH=~/DRL-robot-navigation/catkin_ws/src/multi_robot_scenario/launch
-$ source ~/.bashrc
-$ cd ~/DRL-robot-navigation/catkin_ws
-$ source devel_isolated/setup.bash
+-   编译环境包
+
+```bash
+export ROS_HOSTNAME=localhost  
+export ROS_MASTER_URI=http://localhost:11311  
+export ROS_PORT_SIM=11311  
+export GAZEBO_RESOURCE_PATH=~/DRL-robot-navigation/catkin_ws/src/multi\_robot_scenario/launch  
+source ~/.bashrc  
+cd ~/DRL-robot-navigation/catkin_ws  
+source devel/setup.bash
+
 ```
 
-Run the training:
-```shell
-$ cd ~/DRL-robot-navigation/TD3
-$ python3 train_velodyne_td3.py
+-   训练网络
+    -   默认下载有训练网络好的参数结果，自行训练会更新结果
+
+```bash
+cd ~/DRL-robot-navigation/TD3  
+python3 train_velodyne_td3.py
+
 ```
 
-To check the training process on tensorboard:
-```shell
-$ cd ~/DRL-robot-navigation/TD3
-$ tensorboard --logdir runs
+-   停止训练
+
+```bash
+killall -9 rosout roslaunch rosmaster gzserver nodelet robot_state_publisher gzclient python python3
 ```
 
-To kill the training process:
-```shell
-$ killall -9 rosout roslaunch rosmaster gzserver nodelet robot_state_publisher gzclient python python3
+-   测试网络结果
+
+```bash
+cd ~/DRL-robot-navigation/TD3  
+python3 test_velodyne_td3.py
+
 ```
 
-Once training is completed, test the model:
-```shell
-$ cd ~/DRL-robot-navigation/TD3
-$ python3 test_velodyne_td3.py
-```
 
-Gazebo environment:
-<p align="center">
-    <img width=80% src="https://github.com/reiniscimurs/DRL-robot-navigation/blob/main/env1.png">
-</p>
 
-Rviz:
-<p align="center">
-    <img width=80% src="https://github.com/reiniscimurs/DRL-robot-navigation/blob/main/velodyne.png">
-</p>
+# 4训练效果
+
+-   效果图
+
+![2天2倍速的训练效果，无全局信息](<image/Peek 2023-04-03 19-50_OjuBkv08bx.gif> "2天2倍速的训练效果，无全局信息")
+
+-   Average Q
+
+![](image/Av_Q_dA06CHE9aZ.gif)
+
+-   Max  Q
+
+![](image/Max_Q_JuqbWvhbI7.gif)
+
+-   Loss
+
+![](image/Loss_trRpOcn87t.gif)
+
+# &#x20;5 Reward
+
+-   到达目标r += 100
+-   未到达 r-=100
+-   碰撞（min\_laser\_dis< obstacle\_dis）r-=100
+-   平滑性控制：r+ = v-|w|
